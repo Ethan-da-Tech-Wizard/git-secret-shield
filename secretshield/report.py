@@ -1,30 +1,26 @@
 """
-===============================================================================
-SecretShield - Security Audit Receipt & Report Generator
-===============================================================================
-
-This module formats scan findings into structured JSON or human-readable Markdown
-security audit receipts.
-
-Receipt Design Principles:
---------------------------
-1. Machine-Readable Interoperability (JSON):
-   - Strict schema compliant with DevSecOps CI/CD pipelines, security dashboards,
-     and SIEM ingestion.
-   - Contains zero raw plaintext secrets; all previews are strictly masked.
-
-2. Actionable Remediation (Markdown):
-   - Grouped by severity (CRITICAL -> HIGH -> MEDIUM -> LOW).
-   - Specifies exact line numbers, pattern identification, and step-by-step
-     credential rotation procedures.
+Program: Git Secret Shield - Security Audit Receipt & Report Generator
+Programmer: Ethan Kilmer
+Last Modified: 11/08/2026
+Purpose: Transform detected credential findings into structured, machine-readable JSON receipts for CI/CD pipelines and executive GitHub-flavored Markdown summaries with remediation instructions.
 """
 
 from __future__ import annotations
 
+## ---------------------------------------------------------------------------
+## Standard Library Imports
+## ---------------------------------------------------------------------------
+## json: Serializes structured dictionary records into formatted JSON receipts
 import json
+## datetime: Generates ISO-8601 timestamps and human-readable audit timestamps
 from datetime import datetime, timezone
+## typing: Static typing annotations for dictionary structures and finding lists
 from typing import Any, Dict, List
 
+## ---------------------------------------------------------------------------
+## Internal Imports
+## ---------------------------------------------------------------------------
+## ScanFinding: Data model for individual security violation records
 from secretshield.scanner import ScanFinding
 
 
@@ -42,24 +38,32 @@ def generate_json_report(
     Returns:
         Formatted JSON string.
     """
+    ## Initialize severity tally mapping with zero counts for all supported levels
     severity_counts = {"CRITICAL": 0, "HIGH": 0, "MEDIUM": 0, "LOW": 0}
+
+    ## Tally findings across severity classifications
     for finding in findings:
         severity_counts[finding.severity] = severity_counts.get(finding.severity, 0) + 1
 
+    ## Construct structured audit dictionary payload
     report_payload = {
         "tool": "git-secret-shield",
         "version": "1.0.0",
+        ## Use timezone-aware UTC ISO timestamp for reproducible machine receipts
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "metadata": metadata,
         "summary": {
             "total_findings": len(findings),
             "severity_breakdown": severity_counts,
+            ## Count findings by detection engine phase
             "signature_detections": sum(1 for f in findings if f.detection_type == "signature"),
             "entropy_detections": sum(1 for f in findings if f.detection_type == "entropy"),
         },
+        ## Convert each finding to dictionary form; to_dict() guarantees raw secrets are excluded
         "findings": [f.to_dict() for f in findings],
     }
 
+    ## Return indented JSON string suitable for archiving or piping into SIEM tools
     return json.dumps(report_payload, indent=2)
 
 
@@ -77,13 +81,18 @@ def generate_markdown_report(
     Returns:
         GitHub-flavored Markdown report string.
     """
+    ## Format UTC timestamp in human-readable notation
     timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
+
+    ## Extract scan target description from metadata or default to generic label
     target = metadata.get("target", "Repository / Worktree")
 
+    ## Tally findings by severity tier
     severity_counts = {"CRITICAL": 0, "HIGH": 0, "MEDIUM": 0, "LOW": 0}
     for finding in findings:
         severity_counts[finding.severity] = severity_counts.get(finding.severity, 0) + 1
 
+    ## Build document header and executive summary table
     lines = [
         "# 🛡️ Git Secret Shield - Security Audit Report",
         "",
@@ -102,6 +111,7 @@ def generate_markdown_report(
         "",
     ]
 
+    ## Handle clean audit case (no findings detected)
     if not findings:
         lines.extend([
             "## Audit Result: PASSED ✅",
@@ -111,11 +121,13 @@ def generate_markdown_report(
         ])
         return "\n".join(lines)
 
+    ## Section: Detailed findings enumeration with specific remediation instructions
     lines.extend([
         "## Detailed Findings & Remediation Plan",
         "",
     ])
 
+    ## Iterate over each detected violation and construct markdown item
     for idx, f in enumerate(findings, start=1):
         lines.extend([
             f"### {idx}. [{f.severity}] {f.pattern_name}",
@@ -125,6 +137,8 @@ def generate_markdown_report(
             f"- **Pattern ID:** `{f.pattern_id}`",
             f"- **Masked Preview:** `{f.secret_preview}`",
         ])
+
+        ## Include calculated Shannon entropy score if violation was found via entropy engine
         if f.entropy_score is not None:
             lines.append(f"- **Shannon Entropy Score:** `{f.entropy_score:.3f} bits/symbol`")
 
@@ -133,6 +147,7 @@ def generate_markdown_report(
             "",
         ])
 
+    ## Concluding recommendations and policy guardrails
     lines.extend([
         "---",
         "### Prevention & Policy Recommendations",
@@ -143,4 +158,5 @@ def generate_markdown_report(
         "*Report compiled by [Git Secret Shield](https://github.com/Ethan-da-Tech-Wizard/git-secret-shield).*",
     ])
 
+    ## Join all lines into unified Markdown string
     return "\n".join(lines)

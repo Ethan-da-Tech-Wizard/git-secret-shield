@@ -1,48 +1,38 @@
 """
-===============================================================================
-SecretShield - Recursive Secret & Entropy Scanner Engine
-===============================================================================
-
-This module provides the core scanning engine that processes individual files,
-directory trees, and git staged changes to uncover hardcoded secrets.
-
-Key Architectural Capabilities:
---------------------------------
-1. Dual-Engine Detection Pipeline:
-   - Stage 1: Deterministic signature matching against curated regex patterns
-     (35+ vendor and credential formats).
-   - Stage 2: Information-theoretic Shannon entropy analysis for unknown,
-     randomized keys, tokens, and cryptographic seeds.
-
-2. Fast Binary & False-Positive Elimination:
-   - Immediate rejection of binary files (zero-byte probing within initial block).
-   - Exclusion of dependency trees (`node_modules`, `.venv`), source control
-     metadata (`.git`), build artifacts, and package manager lockfiles.
-
-3. Git Staged Pre-Commit Optimization:
-   - Parses `git diff --cached --unified=0` to inspect exclusively modified
-     or newly inserted lines prior to commit finalization.
-   - Prevents blocking commits due to legacy secrets already present elsewhere
-     in existing repository history.
-
-4. Safe Secret Masking:
-   - Findings redact all sensitive characters by default (e.g. `AKIA************`),
-     preventing accidental leakage into logs, dashboards, or CI console transcripts.
+Program: Git Secret Shield - Recursive Secret & Entropy Scanner Engine
+Programmer: Ethan Kilmer
+Last Modified: 11/08/2026
+Purpose: Recursively inspect files, directories, text streams, and Git staged patches using two-phase detection (deterministic regex signatures plus Shannon entropy analysis) with binary exclusion and safe secret masking.
 """
 
 from __future__ import annotations
 
+## ---------------------------------------------------------------------------
+## Standard Library Imports
+## ---------------------------------------------------------------------------
+## os: Directory traversal (os.walk) and path handling
 import os
+## subprocess: Executes git commands (`git diff --cached`) for staged hook scanning
 import subprocess
+## dataclasses: Data container models for findings (asdict converts dataclass to dict)
 from dataclasses import asdict, dataclass
+## pathlib.Path: Object-oriented filesystem path navigation
 from pathlib import Path
+## typing: Static typing annotations for collections and generator returns
 from typing import Dict, Generator, Iterable, List, Optional, Set, Tuple
 
+## ---------------------------------------------------------------------------
+## Internal Imports
+## ---------------------------------------------------------------------------
+## extract_potential_tokens, is_high_entropy: Entropy evaluation utilities
 from secretshield.entropy import extract_potential_tokens, is_high_entropy
+## SCANNER_PATTERNS, SecretPattern: Curated signature pattern definitions
 from secretshield.patterns import SCANNER_PATTERNS, SecretPattern
 
-
-# Ignored directory names (dependency trees, build artifacts, venvs)
+## ---------------------------------------------------------------------------
+## Scanner Exclusion Sets
+## ---------------------------------------------------------------------------
+## Directories excluded during recursive traversal (dependency caches, venvs, IDEs)
 DEFAULT_IGNORED_DIRS: Set[str] = {
     ".git",
     ".hg",
@@ -62,7 +52,7 @@ DEFAULT_IGNORED_DIRS: Set[str] = {
     ".vscode",
 }
 
-# Ignored binary and media file extensions
+## File extensions skipped to avoid processing binary media, fonts, and compiled artifacts
 DEFAULT_IGNORED_EXTENSIONS: Set[str] = {
     ".png", ".jpg", ".jpeg", ".gif", ".ico", ".svg", ".webp",
     ".pdf", ".zip", ".tar", ".gz", ".7z", ".bz2", ".xz",
@@ -73,7 +63,7 @@ DEFAULT_IGNORED_EXTENSIONS: Set[str] = {
     ".iso", ".dmg", ".qcow2",
 }
 
-# Lockfiles that contain thousands of non-secret cryptographic package hashes
+## Dependency lockfiles containing thousands of non-secret cryptographic checksums
 DEFAULT_IGNORED_FILENAMES: Set[str] = {
     "package-lock.json",
     "yarn.lock",
@@ -100,12 +90,17 @@ def mask_secret(secret: str, visible_start: int = 4, visible_end: int = 4) -> st
     Returns:
         The masked secret string.
     """
+    ## Calculate total secret length
     length = len(secret)
+
+    ## If secret is too short to show leading and trailing characters safely, mask entirely
     if length <= (visible_start + visible_end):
-        # String too short for partial masking; mask completely
         return "*" * length
 
+    ## Compute number of asterisks needed for the middle redaction span
     mask_len = length - (visible_start + visible_end)
+
+    ## Return composite string: unmasked prefix + masked asterisks + unmasked suffix
     return secret[:visible_start] + ("*" * mask_len) + secret[-visible_end:]
 
 
@@ -123,12 +118,14 @@ def is_binary_file(path: Path, block_size: int = 1024) -> bool:
     Returns:
         True if the file is detected as binary, False otherwise.
     """
+    ## Open file in binary read mode to inspect initial chunk
     try:
         with open(path, "rb") as f:
             chunk = f.read(block_size)
+            ## Check for presence of null byte (b'\x00')
             return b"\x00" in chunk
     except (OSError, PermissionError):
-        # If unreadable, treat as non-text to avoid scanner crashes
+        ## If file cannot be read, treat as non-text to avoid crashing the scanner
         return True
 
 
@@ -164,8 +161,9 @@ class ScanFinding:
 
     def to_dict(self) -> Dict[str, object]:
         """Convert finding to a JSON-serializable dictionary without exposing raw secrets."""
+        ## Convert dataclass fields to standard dictionary
         data = asdict(self)
-        # Never serialize raw plaintext secret to dictionary outputs
+        ## Strictly purge raw plaintext secret from serialized representation
         data.pop("raw_secret", None)
         return data
 
@@ -196,13 +194,19 @@ class SecretScanner:
             ignored_extensions: Set of file extensions to skip.
             ignored_files: Set of exact filenames to skip.
         """
+        ## Assign signature patterns; default to full built-in pattern suite
         self.patterns = patterns if patterns is not None else SCANNER_PATTERNS
+        ## Boolean flag controlling secondary Shannon entropy analysis
         self.check_entropy = check_entropy
+        ## Minimum character length threshold before evaluating candidate token entropy
         self.entropy_min_length = entropy_min_length
+        ## Directory exclusion set
         self.ignored_dirs = ignored_dirs if ignored_dirs is not None else DEFAULT_IGNORED_DIRS
+        ## File extension exclusion set
         self.ignored_extensions = (
             ignored_extensions if ignored_extensions is not None else DEFAULT_IGNORED_EXTENSIONS
         )
+        ## Specific filename exclusion set (lockfiles)
         self.ignored_files = (
             ignored_files if ignored_files is not None else DEFAULT_IGNORED_FILENAMES
         )
@@ -224,26 +228,28 @@ class SecretScanner:
         Returns:
             True if file should be scanned, False if skipped.
         """
+        ## Verify file exists and is a regular file (not directory or socket)
         if not path.is_file():
             return False
 
-        # Check ignored filenames (e.g., package-lock.json)
+        ## Check if filename matches ignored lockfile list (e.g. package-lock.json)
         if path.name in self.ignored_files:
             return False
 
-        # Check file extension
+        ## Check if file extension matches binary or media exclusions (.png, .zip, etc.)
         if path.suffix.lower() in self.ignored_extensions:
             return False
 
-        # Check if any parent folder is in the ignored list
+        ## Check if any folder component along the path is in the ignored set
         for part in path.parts:
             if part in self.ignored_dirs:
                 return False
 
-        # Check for binary file structure
+        ## Probe file contents for binary null bytes
         if is_binary_file(path):
             return False
 
+        ## File passed all exclusion checks; eligible for secret scanning
         return True
 
     def scan_line(
@@ -263,18 +269,24 @@ class SecretScanner:
         Returns:
             List of ScanFinding records identified on this line.
         """
+        ## Findings accumulator for this line
         findings: List[ScanFinding] = []
+        ## Track character start/end spans of confirmed signature matches to suppress redundant entropy alerts
         matched_spans: Set[Tuple[int, int]] = set()
 
-        # Phase 1: Curated Signature Pattern Matching
+        ## ---------------------------------------------------------------------
+        ## Phase 1: Curated Signature Pattern Matching
+        ## ---------------------------------------------------------------------
         for pattern in self.patterns:
+            ## Evaluate regular expression across the line
             for match in pattern.regex.finditer(line):
-                # If pattern has a capturing group, use group 1; otherwise entire match
+                ## Extract captured group 1 if defined; otherwise full matched string
                 secret_text = match.group(1) if match.lastindex else match.group(0)
 
-                # Record matched character span to avoid redundant entropy alert
+                ## Store span indices for overlap checking
                 matched_spans.add(match.span())
 
+                ## Construct signature detection finding record
                 finding = ScanFinding(
                     file_path=file_path,
                     line_number=line_number,
@@ -289,26 +301,31 @@ class SecretScanner:
                 )
                 findings.append(finding)
 
-        # Phase 2: Shannon Entropy Analysis (if enabled)
+        ## ---------------------------------------------------------------------
+        ## Phase 2: Shannon Entropy Analysis (if enabled)
+        ## ---------------------------------------------------------------------
         if self.check_entropy:
+            ## Extract contiguous candidate token strings meeting minimum length
             candidates = extract_potential_tokens(line, min_len=self.entropy_min_length)
             for candidate in candidates:
-                # Check if candidate token overlaps with an already-flagged signature match
+                ## Determine token position in line to check for overlap with Phase 1 matches
                 token_start = line.find(candidate)
                 if token_start != -1:
                     token_span = (token_start, token_start + len(candidate))
+                    ## If candidate overlaps with a high-confidence signature match, skip it
                     if any(
                         s[0] <= token_span[0] and s[1] >= token_span[1]
                         for s in matched_spans
                     ):
-                        # Already matched by a high-confidence signature
                         continue
 
+                ## Evaluate candidate token entropy against calibrated thresholds
                 is_suspicious, charset_type, entropy = is_high_entropy(
                     candidate,
                     min_length=self.entropy_min_length,
                 )
 
+                ## If entropy exceeds the character set threshold, record an alert
                 if is_suspicious:
                     finding = ScanFinding(
                         file_path=file_path,
@@ -329,6 +346,7 @@ class SecretScanner:
                     )
                     findings.append(finding)
 
+        ## Return all detected findings for this line
         return findings
 
     def scan_text(self, text: str, source_name: str = "<memory>") -> List[ScanFinding]:
@@ -343,6 +361,7 @@ class SecretScanner:
             List of ScanFinding records.
         """
         findings: List[ScanFinding] = []
+        ## Iterate over lines with 1-based indexing
         for line_idx, line in enumerate(text.splitlines(), start=1):
             findings.extend(self.scan_line(line, line_idx, source_name))
         return findings
@@ -357,17 +376,19 @@ class SecretScanner:
         Returns:
             List of ScanFinding records.
         """
+        ## Verify file meets scanning criteria
         if not self.should_scan_file(path):
             return []
 
         findings: List[ScanFinding] = []
         try:
+            ## Open text file with UTF-8 decoding and replacement for non-decodable bytes
             with open(path, "r", encoding="utf-8", errors="replace") as f:
                 for line_idx, line in enumerate(f, start=1):
                     line_findings = self.scan_line(line, line_idx, str(path))
                     findings.extend(line_findings)
         except (OSError, PermissionError):
-            # Gracefully handle file read exceptions
+            ## Silently ignore unreadable or permission-restricted files
             return []
 
         return findings
@@ -389,12 +410,14 @@ class SecretScanner:
         """
         all_findings: List[ScanFinding] = []
 
+        ## Validate directory existence
         if not directory.exists() or not directory.is_dir():
             return []
 
         if recursive:
+            ## Walk directory tree recursively
             for root, dirs, files in os.walk(directory):
-                # In-place modify dirs to prune ignored subdirectories during os.walk
+                ## In-place prune ignored directories from traversal list
                 dirs[:] = [d for d in dirs if d not in self.ignored_dirs]
 
                 root_path = Path(root)
@@ -403,6 +426,7 @@ class SecretScanner:
                     if self.should_scan_file(file_path):
                         all_findings.extend(self.scan_file(file_path))
         else:
+            ## Non-recursive shallow scan of immediate directory files
             for item in directory.iterdir():
                 if item.is_file() and self.should_scan_file(item):
                     all_findings.extend(self.scan_file(item))
@@ -423,9 +447,10 @@ class SecretScanner:
         Returns:
             List of ScanFinding records detected in staged additions.
         """
+        ## Default to current working directory if repo_path not explicitly specified
         target_dir = repo_path or Path.cwd()
 
-        # Run git diff --cached to get raw staged patch
+        ## Execute git diff against cached staging index
         try:
             cmd = ["git", "diff", "--cached", "--unified=0", "--no-color"]
             result = subprocess.run(
@@ -435,32 +460,34 @@ class SecretScanner:
                 text=True,
                 check=False,
             )
+            ## Return empty list if git diff exited with error (e.g. non-git directory)
             if result.returncode != 0:
-                # Git command failed (e.g. not a git repository)
                 return []
         except (FileNotFoundError, OSError):
-            # git executable not available in environment PATH
+            ## Git binary not found on PATH
             return []
 
         findings: List[ScanFinding] = []
         current_file: Optional[str] = None
         current_line_num: int = 1
 
+        ## Parse standard unified diff output stream
         for line in result.stdout.splitlines():
-            # Header line: '+++ b/path/to/file.py'
+            ## File target header: '+++ b/path/to/file.py'
             if line.startswith("+++ b/"):
                 current_file = line[6:].strip()
                 continue
+            ## File deletion header: '+++ /dev/null'
             elif line.startswith("+++ /dev/null"):
                 current_file = None
                 continue
 
-            # Chunk header: '@@ -old,count +new,count @@'
+            ## Chunk range indicator: '@@ -old,count +new,count @@'
             if line.startswith("@@"):
                 parts = line.split()
                 for part in parts:
                     if part.startswith("+"):
-                        # Extract starting line number: e.g. '+42,5' or '+42'
+                        ## Extract newly added line number
                         num_str = part[1:].split(",")[0]
                         try:
                             current_line_num = int(num_str)
@@ -468,19 +495,20 @@ class SecretScanner:
                             current_line_num = 1
                 continue
 
-            # Added line: begins with '+' and not '+++'
+            ## Added content line (starts with '+' but not '+++')
             if line.startswith("+") and not line.startswith("+++"):
                 if current_file:
                     target_file_path = target_dir / current_file
-                    # Skip if the file matches an ignored pattern or is binary
+                    ## Verify file is not excluded (e.g. not lockfile or binary)
                     if self.should_scan_file(target_file_path):
-                        added_text = line[1:]  # strip leading '+'
+                        added_text = line[1:]  ## Strip leading '+' diff marker
                         line_findings = self.scan_line(
                             added_text,
                             current_line_num,
                             current_file,
                         )
                         findings.extend(line_findings)
+                ## Increment line counter for next line in this hunk
                 current_line_num += 1
 
         return findings

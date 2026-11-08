@@ -1,42 +1,47 @@
 """
-===============================================================================
-SecretShield - Command-Line Interface (CLI) Dispatcher
-===============================================================================
-
-This module provides the terminal interface and subcommands for Git Secret Shield:
-  - `scan`: Audit files, directories, or git staged changes.
-  - `install-hook`: Register pre-commit hook into local .git.
-  - `uninstall-hook`: Remove pre-commit hook.
-  - `redact`: Sanitize files (.env, configs) by replacing secrets with placeholders.
-  - `patterns`: Enumerate all built-in detection signatures.
-  - `report`: Produce standalone Markdown or JSON security audit receipts.
-
-POSIX & DevSecOps Compliance:
-  - Returns exit code 0 on clean scan; exit code 1 when `--fail-on-findings`
-    is requested and secrets are uncovered.
-  - Automatically respects `NO_COLOR` environment variable (https://no-color.org)
-    and terminal TTY capabilities.
+Program: Git Secret Shield - Command-Line Interface Dispatcher
+Programmer: Ethan Kilmer
+Last Modified: 11/08/2026
+Purpose: Provide a rich terminal CLI with subcommands (scan, install-hook, uninstall-hook, redact, patterns) supporting colored output, POSIX status code returns, and CI/CD automation flags.
 """
 
 from __future__ import annotations
 
+## ---------------------------------------------------------------------------
+## Standard Library Imports
+## ---------------------------------------------------------------------------
+## argparse: Robust command-line argument parsing and subcommand dispatching
 import argparse
+## os: Access environment variables (e.g. NO_COLOR)
 import os
+## sys: Access sys.stdout, sys.stderr, and process exit status
 import sys
+## time: Execution duration benchmarking
 import time
+## pathlib.Path: Filesystem path manipulation and report writing
 from pathlib import Path
+## typing: Static typing annotations for arguments and lists
 from typing import List, Optional
 
+## ---------------------------------------------------------------------------
+## Internal Imports
+## ---------------------------------------------------------------------------
+## is_high_entropy: Shannon entropy evaluator
 from secretshield.entropy import is_high_entropy
+## install_pre_commit_hook, uninstall_pre_commit_hook: Git hook lifecycle management
 from secretshield.hook import install_pre_commit_hook, uninstall_pre_commit_hook
+## SCANNER_PATTERNS: Catalog of all detection signatures
 from secretshield.patterns import SCANNER_PATTERNS
+## redact_file: File sanitization engine
 from secretshield.redactor import redact_file
+## generate_json_report, generate_markdown_report: Audit receipt generators
 from secretshield.report import generate_json_report, generate_markdown_report
+## ScanFinding, SecretScanner: Core scanner engine and finding model
 from secretshield.scanner import ScanFinding, SecretScanner
 
 
-# ANSI Color formatting codes for terminal UX
 class TermColor:
+    """ANSI color formatting escape sequences for terminal display."""
     RESET = "\033[0m"
     BOLD = "\033[1m"
     RED = "\033[91m"
@@ -48,38 +53,63 @@ class TermColor:
 
 
 def _colorize(text: str, color_code: str) -> str:
-    """Apply ANSI color if stdout is a TTY and NO_COLOR is not set."""
+    """
+    Apply ANSI color code if stdout is an interactive TTY and NO_COLOR is not set.
+
+    Respects the NO_COLOR standard (https://no-color.org).
+    """
+    ## Check NO_COLOR environment variable and interactive terminal state
     if os.environ.get("NO_COLOR") or not sys.stdout.isatty():
         return text
+    ## Wrap text with ANSI escape sequence and reset suffix
     return f"{color_code}{text}{TermColor.RESET}"
 
 
 def cmd_scan(args: argparse.Namespace) -> int:
-    """Execute scanning workflow on files, directories, or git staged files."""
+    """
+    Execute scanning workflow on files, directories, or git staged files.
+
+    Returns:
+        0: Scan clean, or findings present without --fail-on-findings.
+        1: Findings present and --fail-on-findings specified.
+        2: Invalid target path error.
+    """
+    ## Record start timestamp for benchmark reporting
     start_time = time.time()
+
+    ## Initialize scanner with entropy enabled unless explicitly disabled via flag
     scanner = SecretScanner(check_entropy=not args.no_entropy)
 
+    ## Resolve target path to an absolute path
     target_path = Path(args.target).resolve()
     findings: List[ScanFinding] = []
     target_description = str(target_path)
 
+    ## Branch 1: Scan git staged changes (pre-commit mode)
     if args.staged:
         target_description = f"Git Staged Index ({target_path})"
         if not args.json and not args.markdown:
             print(_colorize(f"[SecretShield] Scanning git staged changes in {target_path}...", TermColor.CYAN))
         findings = scanner.scan_git_staged(target_path)
+
+    ## Branch 2: Target is a single file
     elif target_path.is_file():
         if not args.json and not args.markdown:
             print(_colorize(f"[SecretShield] Scanning file: {target_path}...", TermColor.CYAN))
         findings = scanner.scan_file(target_path)
+
+    ## Branch 3: Target is a directory
     elif target_path.is_dir():
         if not args.json and not args.markdown:
             print(_colorize(f"[SecretShield] Recursively scanning directory: {target_path}...", TermColor.CYAN))
         findings = scanner.scan_directory(target_path, recursive=not args.non_recursive)
+
+    ## Branch 4: Path does not exist
     else:
         print(_colorize(f"[SecretShield] Error: Path '{target_path}' does not exist.", TermColor.RED), file=sys.stderr)
         return 2
 
+    ## Compute scan duration in seconds
     duration = round(time.time() - start_time, 3)
     metadata = {
         "target": target_description,
@@ -87,21 +117,23 @@ def cmd_scan(args: argparse.Namespace) -> int:
         "entropy_enabled": not args.no_entropy,
     }
 
-    # Format outputs according to requested flags
+    ## Format and output results based on requested flags
     if args.json:
+        ## Generate machine-readable JSON receipt
         report_output = generate_json_report(findings, metadata)
         if args.output:
             Path(args.output).write_text(report_output, encoding="utf-8")
         else:
             print(report_output)
     elif args.markdown:
+        ## Generate executive Markdown report
         report_output = generate_markdown_report(findings, metadata)
         if args.output:
             Path(args.output).write_text(report_output, encoding="utf-8")
         else:
             print(report_output)
     else:
-        # Human-friendly terminal printer
+        ## Render human-friendly colored terminal findings table
         _print_terminal_findings(findings, duration, target_description)
         if args.output:
             Path(args.output).write_text(
@@ -110,14 +142,17 @@ def cmd_scan(args: argparse.Namespace) -> int:
             )
             print(_colorize(f"[SecretShield] Saved markdown report -> {args.output}", TermColor.GREEN))
 
+    ## Enforce failure status code if findings were detected and flag requested
     if findings and args.fail_on_findings:
         return 1
 
+    ## Clean scan / normal completion
     return 0
 
 
 def _print_terminal_findings(findings: List[ScanFinding], duration: float, target: str) -> None:
     """Render colorized findings table to standard output."""
+    ## Header banner
     print("=" * 72)
     print(_colorize("🛡️  GIT SECRET SHIELD - SCAN RESULTS", TermColor.BOLD))
     print("=" * 72)
@@ -126,12 +161,15 @@ def _print_terminal_findings(findings: List[ScanFinding], duration: float, targe
     print(f"Findings: {len(findings)}")
     print("-" * 72)
 
+    ## Clean scan message
     if not findings:
         print(_colorize("✅ Clean! No secrets or high-entropy credentials detected.", TermColor.GREEN))
         print("=" * 72)
         return
 
+    ## Detailed findings enumeration
     for idx, f in enumerate(findings, start=1):
+        ## Color code badge according to severity
         color = TermColor.RED if f.severity in ("CRITICAL", "HIGH") else TermColor.YELLOW
         sev_tag = _colorize(f"[{f.severity}]", color)
         print(f"\n{idx}. {sev_tag} {TermColor.BOLD}{f.pattern_name}{TermColor.RESET}")
@@ -141,6 +179,7 @@ def _print_terminal_findings(findings: List[ScanFinding], duration: float, targe
             print(f"   Entropy:   {f.entropy_score:.3f} bits/symbol")
         print(f"   Guidance:  {f.remediation}")
 
+    ## Alert summary footer
     print("\n" + "=" * 72)
     print(_colorize(f"🚨 ALERT: Found {len(findings)} potential secret(s)!", TermColor.RED + TermColor.BOLD))
     print("Do not commit these secrets to remote repositories.")
@@ -148,7 +187,7 @@ def _print_terminal_findings(findings: List[ScanFinding], duration: float, targe
 
 
 def cmd_install_hook(args: argparse.Namespace) -> int:
-    """Install git pre-commit hook."""
+    """Install git pre-commit hook into repository."""
     repo_path = Path(args.path).resolve()
     success, message = install_pre_commit_hook(repo_path, force=args.force)
 
@@ -161,7 +200,7 @@ def cmd_install_hook(args: argparse.Namespace) -> int:
 
 
 def cmd_uninstall_hook(args: argparse.Namespace) -> int:
-    """Remove git pre-commit hook."""
+    """Remove git pre-commit hook from repository."""
     repo_path = Path(args.path).resolve()
     success, message = uninstall_pre_commit_hook(repo_path)
 
@@ -210,14 +249,14 @@ def cmd_patterns(args: argparse.Namespace) -> int:
 
 
 def build_parser() -> argparse.ArgumentParser:
-    """Construct command-line argument parser."""
+    """Construct command-line argument parser with all subcommands."""
     parser = argparse.ArgumentParser(
         prog="secretshield",
         description="Zero-dependency offline secret detection engine and git pre-commit hook guardian.",
     )
     subparsers = parser.add_subparsers(dest="command", help="Available subcommands")
 
-    # Subcommand: scan
+    ## Subcommand: scan
     scan_p = subparsers.add_parser("scan", help="Scan files, directories, or git staged files for secrets.")
     scan_p.add_argument("target", nargs="?", default=".", help="Target file or directory path (default: .)")
     scan_p.add_argument("--staged", action="store_true", help="Scan git staged changes only.")
@@ -228,23 +267,23 @@ def build_parser() -> argparse.ArgumentParser:
     scan_p.add_argument("--markdown", action="store_true", help="Output results in Markdown format.")
     scan_p.add_argument("-o", "--output", help="Save output report to specified file.")
 
-    # Subcommand: install-hook
+    ## Subcommand: install-hook
     install_p = subparsers.add_parser("install-hook", help="Install git pre-commit hook guardian.")
     install_p.add_argument("--path", default=".", help="Path inside target git repository (default: .)")
     install_p.add_argument("-f", "--force", action="store_true", help="Overwrite existing pre-commit hook.")
 
-    # Subcommand: uninstall-hook
+    ## Subcommand: uninstall-hook
     uninstall_p = subparsers.add_parser("uninstall-hook", help="Remove git pre-commit hook.")
     uninstall_p.add_argument("--path", default=".", help="Path inside target git repository (default: .)")
 
-    # Subcommand: redact
+    ## Subcommand: redact
     redact_p = subparsers.add_parser("redact", help="Sanitize secrets from a file (.env, configs).")
     redact_p.add_argument("file", help="File to sanitize.")
     redact_p.add_argument("-i", "--in-place", action="store_true", help="Overwrite file in-place.")
     redact_p.add_argument("-o", "--output", help="Output destination file path.")
     redact_p.add_argument("--no-backup", action="store_true", help="Skip creating .bak backup when --in-place is used.")
 
-    # Subcommand: patterns
+    ## Subcommand: patterns
     subparsers.add_parser("patterns", help="List all built-in secret signature patterns.")
 
     return parser
@@ -255,10 +294,12 @@ def main(argv: Optional[List[str]] = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
 
+    ## If no subcommand specified, display help and exit cleanly
     if not args.command:
         parser.print_help()
         return 0
 
+    ## Dispatch to appropriate command handler
     if args.command == "scan":
         return cmd_scan(args)
     elif args.command == "install-hook":

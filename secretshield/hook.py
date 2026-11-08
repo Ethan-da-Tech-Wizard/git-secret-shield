@@ -1,40 +1,33 @@
 """
-===============================================================================
-SecretShield - Git Pre-Commit Hook Integration Engine
-===============================================================================
-
-This module handles lifecycle management (installation, verification, and uninstallation)
-for POSIX-compliant git pre-commit hooks.
-
-Git Hook Lifecycle Theory:
---------------------------
-Git triggers the `.git/hooks/pre-commit` script prior to writing a commit object
-to the local git repository database.
-  1. The developer invokes `git commit`.
-  2. Git invokes `.git/hooks/pre-commit` with no parameters.
-  3. The hook inspects the git index (staging area).
-  4. If the hook exits with return code 0:
-     Git completes the commit object creation.
-  5. If the hook exits with non-zero (e.g. exit 1):
-     Git immediately aborts the commit, preserving all staged changes untouched
-     in the developer's working directory.
-
-This guarantees that secrets are stopped BEFORE they enter local git revision
-history, avoiding painful and dangerous `git filter-repo` or `git rebase` rewrites.
+Program: Git Secret Shield - Git Pre-Commit Hook Integration Guardian
+Programmer: Ethan Kilmer
+Last Modified: 11/08/2026
+Purpose: Manage the lifecycle (detection, installation, verification, and uninstallation) of POSIX-compliant Git pre-commit hooks to prevent uncommitted secrets from leaking into Git version control.
 """
 
 from __future__ import annotations
 
+## ---------------------------------------------------------------------------
+## Standard Library Imports
+## ---------------------------------------------------------------------------
+## os: Operating system interfaces for file permissions and stat queries
 import os
+## stat: File mode bit flags (S_IXUSR, S_IXGRP, S_IXOTH) to set executable permissions
 import stat
+## pathlib.Path: Object-oriented filesystem path manipulation
 from pathlib import Path
+## typing: Type hints for optional values and tuple returns
 from typing import Optional, Tuple
 
-
-# Marker token used to identify SecretShield's presence in an existing hook script
+## ---------------------------------------------------------------------------
+## Hook Script Constants
+## ---------------------------------------------------------------------------
+## Marker token used to identify SecretShield's presence in an existing hook script.
+## This allows safe detection and idempotent overwriting without destroying user hooks.
 SECRETSHIELD_HOOK_MARKER = "### SECRETSHIELD_GIT_HOOK_GUARDIAN_V1 ###"
 
-# POSIX-compliant shell script template installed into .git/hooks/pre-commit
+## POSIX-compliant shell script template installed into .git/hooks/pre-commit.
+## Executes `python3 -m secretshield scan --staged --fail-on-findings` before commit creation.
 PRE_COMMIT_HOOK_TEMPLATE = f"""#!/bin/sh
 {SECRETSHIELD_HOOK_MARKER}
 # =============================================================================
@@ -84,13 +77,17 @@ def find_git_root(start_path: Optional[Path] = None) -> Optional[Path]:
     Returns:
         Path to git repository root, or None if not inside a git worktree.
     """
+    ## Resolve start directory to an absolute canonical path; default to current working directory
     current = (start_path or Path.cwd()).resolve()
 
+    ## Traverse the directory ancestry tree upwards toward filesystem root
     for parent in [current] + list(current.parents):
         git_entry = parent / ".git"
+        ## Verify existence of .git directory or submodule pointer file
         if git_entry.exists():
             return parent
 
+    ## If filesystem root reached without encountering .git, return None
     return None
 
 
@@ -107,20 +104,24 @@ def get_hook_path(repo_root: Path) -> Path:
     Returns:
         Path object pointing to the pre-commit hook file.
     """
+    ## Form initial candidate path to the .git entry
     git_dir = repo_root / ".git"
 
+    ## In linked git worktrees or submodules, .git is a text file with `gitdir: <path>`
     if git_dir.is_file():
-        # Handle git worktrees or submodules where .git contains `gitdir: <path>`
         try:
             content = git_dir.read_text(encoding="utf-8").strip()
             if content.startswith("gitdir:"):
+                ## Parse the actual git directory path from pointer file
                 actual_git_dir = Path(content.split("gitdir:", 1)[1].strip())
                 if not actual_git_dir.is_absolute():
                     actual_git_dir = repo_root / actual_git_dir
                 return actual_git_dir / "hooks" / "pre-commit"
         except (OSError, UnicodeDecodeError):
+            ## Fall through to standard layout on file read failure
             pass
 
+    ## Return standard pre-commit hook location within .git/hooks/
     return git_dir / "hooks" / "pre-commit"
 
 
@@ -147,28 +148,31 @@ def install_pre_commit_hook(
     Returns:
         Tuple of (success: bool, message: str).
     """
+    ## Verify target path resides within an active git repository
     root = find_git_root(repo_path)
     if not root:
         return False, "Target directory is not inside a git repository."
 
+    ## Resolve exact target path for the pre-commit hook script
     hook_file = get_hook_path(root)
     hooks_dir = hook_file.parent
 
-    # Create hooks directory if missing (e.g. fresh clones or non-standard templates)
+    ## Create parent hooks directory if it does not yet exist
     try:
         hooks_dir.mkdir(parents=True, exist_ok=True)
     except OSError as err:
         return False, f"Failed to create hooks directory '{hooks_dir}': {err}"
 
-    # Check for existing hook script
+    ## Inspect existing hook file if present
     if hook_file.exists():
         try:
             existing_content = hook_file.read_text(encoding="utf-8", errors="replace")
+            ## Case A: Existing hook was generated by SecretShield -> update safely
             if SECRETSHIELD_HOOK_MARKER in existing_content:
-                # Already managed by SecretShield; overwrite with updated version
                 hook_file.write_text(PRE_COMMIT_HOOK_TEMPLATE, encoding="utf-8")
                 _make_executable(hook_file)
                 return True, f"Updated existing SecretShield pre-commit hook at '{hook_file}'."
+            ## Case B: Foreign hook script present and force flag is False -> protect user file
             elif not force:
                 return (
                     False,
@@ -178,13 +182,14 @@ def install_pre_commit_hook(
         except OSError as err:
             return False, f"Failed to read existing hook: {err}"
 
-    # Write new hook script
+    ## Write standard SecretShield pre-commit hook script
     try:
         hook_file.write_text(PRE_COMMIT_HOOK_TEMPLATE, encoding="utf-8")
         _make_executable(hook_file)
     except OSError as err:
         return False, f"Failed to write hook file: {err}"
 
+    ## Successfully written and configured hook script
     return True, f"Successfully installed pre-commit hook at '{hook_file}'."
 
 
@@ -198,19 +203,24 @@ def uninstall_pre_commit_hook(repo_path: Optional[Path] = None) -> Tuple[bool, s
     Returns:
         Tuple of (success: bool, message: str).
     """
+    ## Find git root directory
     root = find_git_root(repo_path)
     if not root:
         return False, "Target directory is not inside a git repository."
 
+    ## Resolve hook file path
     hook_file = get_hook_path(root)
     if not hook_file.exists():
         return False, f"No pre-commit hook found at '{hook_file}'."
 
+    ## Validate hook ownership before unlinking
     try:
         content = hook_file.read_text(encoding="utf-8", errors="replace")
+        ## Refuse to delete foreign hooks that do not contain our marker signature
         if SECRETSHIELD_HOOK_MARKER not in content:
             return False, f"Hook at '{hook_file}' was not created by SecretShield. Skipping removal."
 
+        ## Delete pre-commit hook file
         hook_file.unlink()
         return True, f"Successfully removed pre-commit hook from '{hook_file}'."
     except OSError as err:
@@ -224,5 +234,7 @@ def _make_executable(path: Path) -> None:
     Args:
         path: File path to modify.
     """
+    ## Read current file mode bitmask
     current_mode = os.stat(path).st_mode
+    ## Apply bitwise OR with User, Group, and Other executable bits (0o755 style)
     os.chmod(path, current_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
