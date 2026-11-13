@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "git-secret-shield"
 version = "1.0.0"
-description = "Zero-dependency offline secret detection engine and git pre-commit hook guardian using Shannon entropy and signature matching."
+description = "Project exploring secret detection and Git pre-commit checks."
 readme = "README.md"
 requires-python = ">=3.8"
 license = { text = "MIT" }
@@ -24,7 +24,6 @@ keywords = [
     "offline-security",
 ]
 classifiers = [
-    "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Developers",
     "Intended Audience :: Information Technology",
     "Intended Audience :: System Administrators",
