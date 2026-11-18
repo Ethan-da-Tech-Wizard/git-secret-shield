@@ -1,3 +1,8 @@
+# Program: git-secret-shield - entropy.py
+# Programmer: Ethan-da-Tech-Wizard (written with Claude, an AI assistant)
+# Last Modified: 2026-11-18
+# Purpose: Computes Shannon entropy and extracts candidate tokens so random-looking secrets without a known prefix can be flagged.
+
 """
 Program: Git Secret Shield - Shannon Information Entropy Engine
 Programmer: Ethan Kilmer

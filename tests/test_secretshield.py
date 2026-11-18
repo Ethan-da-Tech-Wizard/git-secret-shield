@@ -1,3 +1,8 @@
+# Program: git-secret-shield - test_secretshield.py
+# Programmer: Ethan-da-Tech-Wizard (written with Claude, an AI assistant)
+# Last Modified: 2026-11-18
+# Purpose: Unit and integration tests covering entropy, patterns, scanner, hook, redactor, report and CLI behavior.
+
 """
 Program: Git Secret Shield - Exhaustive Unit & Integration Test Suite
 Programmer: Ethan Kilmer

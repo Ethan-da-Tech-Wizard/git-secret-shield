@@ -1,3 +1,8 @@
+# Program: git-secret-shield - hook.py
+# Programmer: Ethan-da-Tech-Wizard (written with Claude, an AI assistant)
+# Last Modified: 2026-11-18
+# Purpose: Installs, checks and removes the Git pre-commit hook that runs the scanner before each commit.
+
 """
 Program: Git Secret Shield - Git Pre-Commit Hook Integration Guardian
 Programmer: Ethan Kilmer

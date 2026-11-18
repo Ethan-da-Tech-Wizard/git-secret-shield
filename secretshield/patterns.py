@@ -1,3 +1,8 @@
+# Program: git-secret-shield - patterns.py
+# Programmer: Ethan-da-Tech-Wizard (written with Claude, an AI assistant)
+# Last Modified: 2026-11-18
+# Purpose: Defines the library of regular-expression signatures for known secret formats (cloud, AI, payment, private keys, etc.).
+
 """
 Program: Git Secret Shield - Curated Secret Signature Patterns
 Programmer: Ethan Kilmer

@@ -1,3 +1,8 @@
+# Program: git-secret-shield - cli.py
+# Programmer: Ethan-da-Tech-Wizard (written with Claude, an AI assistant)
+# Last Modified: 2026-11-18
+# Purpose: Command-line interface: parses subcommands (scan, install-hook, uninstall-hook, redact, patterns), prints colored output and returns exit codes.
+
 """
 Program: Git Secret Shield - Command-Line Interface Dispatcher
 Programmer: Ethan Kilmer
@@ -188,9 +193,12 @@ def _print_terminal_findings(findings: List[ScanFinding], duration: float, targe
 
 def cmd_install_hook(args: argparse.Namespace) -> int:
     """Install git pre-commit hook into repository."""
+    ## Turn the user-supplied path into an absolute path so git lookups are unambiguous
     repo_path = Path(args.path).resolve()
+    ## The hook module returns (worked?, human-readable message); --force allows overwriting
     success, message = install_pre_commit_hook(repo_path, force=args.force)
 
+    ## Print green on success (exit code 0) or red on stderr on failure (exit code 1)
     if success:
         print(_colorize(f"[SecretShield] [SUCCESS] {message}", TermColor.GREEN))
         return 0
@@ -201,9 +209,12 @@ def cmd_install_hook(args: argparse.Namespace) -> int:
 
 def cmd_uninstall_hook(args: argparse.Namespace) -> int:
     """Remove git pre-commit hook from repository."""
+    ## Turn the user-supplied path into an absolute path so git lookups are unambiguous
     repo_path = Path(args.path).resolve()
+    ## Ask the hook module to remove the hook; it reports success and a message
     success, message = uninstall_pre_commit_hook(repo_path)
 
+    ## Print green on success (exit code 0) or red on stderr on failure (exit code 1)
     if success:
         print(_colorize(f"[SecretShield] [SUCCESS] {message}", TermColor.GREEN))
         return 0
@@ -214,9 +225,11 @@ def cmd_uninstall_hook(args: argparse.Namespace) -> int:
 
 def cmd_redact(args: argparse.Namespace) -> int:
     """Redact hardcoded secrets from a file."""
+    ## Resolve the file to sanitize (and the optional output file) to absolute paths
     file_path = Path(args.file).resolve()
     output_path = Path(args.output).resolve() if args.output else None
 
+    ## redact_file returns (worked?, number of secrets replaced, message); backups are on unless --no-backup
     success, count, msg = redact_file(
         file_path,
         output_path=output_path,
@@ -224,6 +237,7 @@ def cmd_redact(args: argparse.Namespace) -> int:
         create_backup=not args.no_backup,
     )
 
+    ## Print green on success (exit code 0) or red on stderr on failure (exit code 1)
     if success:
         print(_colorize(f"[SecretShield] {msg}", TermColor.GREEN))
         return 0
@@ -239,7 +253,9 @@ def cmd_patterns(args: argparse.Namespace) -> int:
     print("=" * 78)
     print(f"Total Patterns: {len(SCANNER_PATTERNS)}\n")
 
+    ## Show every built-in pattern with its severity, description and fix advice
     for p in SCANNER_PATTERNS:
+        ## Red for the most serious severities, yellow for the rest
         sev_color = TermColor.RED if p.severity in ("CRITICAL", "HIGH") else TermColor.YELLOW
         print(f"- {_colorize(f'[{p.severity}]', sev_color)} {TermColor.BOLD}{p.name}{TermColor.RESET} (`{p.id}`)")
         print(f"  Description: {p.description}")
@@ -291,6 +307,7 @@ def build_parser() -> argparse.ArgumentParser:
 
 def main(argv: Optional[List[str]] = None) -> int:
     """CLI application entry point."""
+    ## Build the argument parser, then read the arguments (argv=None means use sys.argv)
     parser = build_parser()
     args = parser.parse_args(argv)
 
