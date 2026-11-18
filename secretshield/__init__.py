@@ -1,3 +1,8 @@
+# Program: git-secret-shield - __init__.py
+# Programmer: Ethan-da-Tech-Wizard (written with Claude, an AI assistant)
+# Last Modified: 2026-11-18
+# Purpose: Package entry point: defines version metadata and re-exports the public scanner, entropy, hook, redactor and report APIs.
+
 """
 Program: Git Secret Shield - Package Initialization & Public API
 Programmer: Ethan Kilmer

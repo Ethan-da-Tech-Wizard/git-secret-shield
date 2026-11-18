@@ -1,3 +1,8 @@
+# Program: git-secret-shield - redactor.py
+# Programmer: Ethan-da-Tech-Wizard (written with Claude, an AI assistant)
+# Last Modified: 2026-11-18
+# Purpose: Replaces detected secrets in text or files with placeholders, keeping a backup of the original file.
+
 """
 Program: Git Secret Shield - File Sanitizer & Credential Redactor
 Programmer: Ethan Kilmer

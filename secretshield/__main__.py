@@ -1,3 +1,8 @@
+# Program: git-secret-shield - __main__.py
+# Programmer: Ethan-da-Tech-Wizard (written with Claude, an AI assistant)
+# Last Modified: 2026-11-18
+# Purpose: Lets the package run as 'python3 -m secretshield' by calling the CLI main function and exiting with its status code.
+
 """
 Program: Git Secret Shield - Package Executable Main Entry Point
 Programmer: Ethan Kilmer

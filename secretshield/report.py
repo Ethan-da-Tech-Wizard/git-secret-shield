@@ -1,3 +1,8 @@
+# Program: git-secret-shield - report.py
+# Programmer: Ethan-da-Tech-Wizard (written with Claude, an AI assistant)
+# Last Modified: 2026-11-18
+# Purpose: Turns scan findings into a JSON receipt and a Markdown summary report.
+
 """
 Program: Git Secret Shield - Security Audit Receipt & Report Generator
 Programmer: Ethan Kilmer

@@ -1,3 +1,8 @@
+# Program: git-secret-shield - scanner.py
+# Programmer: Ethan-da-Tech-Wizard (written with Claude, an AI assistant)
+# Last Modified: 2026-11-18
+# Purpose: Scans text, files, directories and staged Git diffs for secrets using regex signatures plus entropy checks, with masking of results.
+
 """
 Program: Git Secret Shield - Recursive Secret & Entropy Scanner Engine
 Programmer: Ethan Kilmer
