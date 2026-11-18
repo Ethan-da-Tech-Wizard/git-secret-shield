@@ -1,9 +1,15 @@
-"""
-Program: Git Secret Shield - Recursive Secret & Entropy Scanner Engine
-Programmer: Ethan Kilmer
-Last Modified: 11/08/2026
-Purpose: Recursively inspect files, directories, text streams, and Git staged patches using two-phase detection (deterministic regex signatures plus Shannon entropy analysis) with binary exclusion and safe secret masking.
-"""
+# ==============================================================================
+# Program: scanner.py
+# Programmer: Ethan-da-Tech-Wizard
+# Course: CIS 156 / Advanced Systems
+# Last Modified: November 18, 2026
+# Purpose: Core two-phase recursive secret and entropy scanner engine.
+#          Inputs: Files, directory trees, text strings, and git staging areas.
+#          Outputs: Structured ScanFinding instances with masked secret previews,
+#                   severity ratings, byte offsets, and line numbers.
+#          Design Rationale: Combines high-speed compiled regex matching with
+#                            Shannon information entropy analysis and binary file skipping.
+# ==============================================================================
 
 from __future__ import annotations
 

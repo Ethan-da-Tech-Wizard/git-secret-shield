@@ -1,9 +1,16 @@
-"""
-Program: Git Secret Shield - Shannon Information Entropy Engine
-Programmer: Ethan Kilmer
-Last Modified: 11/08/2026
-Purpose: Calculate Claude Shannon information entropy on arbitrary candidate tokens to detect high-randomness passwords, cryptographic keys, and tokens lacking static signature prefixes without excessive false positives.
-"""
+# ==============================================================================
+# Program: entropy.py
+# Programmer: Ethan-da-Tech-Wizard
+# Course: CIS 156 / Advanced Systems
+# Last Modified: November 18, 2026
+# Purpose: Calculate Claude Shannon informational entropy on candidate text tokens
+#          to detect unstructured high-randomness secrets and cryptographic keys.
+#          Inputs: Arbitrary string tokens, text lines, and calibrated charset thresholds.
+#          Outputs: Shannon entropy values (bits/char), frequency distributions,
+#                   and boolean classifications of high-entropy credentials.
+#          Design Rationale: Augments static regex pattern matching by detecting
+#                            random hex, base64, and alphanumeric keys lacking static prefixes.
+# ==============================================================================
 
 from __future__ import annotations
 

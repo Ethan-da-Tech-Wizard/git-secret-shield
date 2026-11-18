@@ -1,9 +1,16 @@
-"""
-Program: Git Secret Shield - Command-Line Interface Dispatcher
-Programmer: Ethan Kilmer
-Last Modified: 11/08/2026
-Purpose: Provide a rich terminal CLI with subcommands (scan, install-hook, uninstall-hook, redact, patterns) supporting colored output, POSIX status code returns, and CI/CD automation flags.
-"""
+# ==============================================================================
+# Program: cli.py
+# Programmer: Ethan-da-Tech-Wizard
+# Course: CIS 156 / Advanced Systems
+# Last Modified: November 18, 2026
+# Purpose: Command-Line Interface Dispatcher for Git Secret Shield.
+#          Inputs: CLI subcommands (scan, install-hook, uninstall-hook, redact, patterns)
+#                  and accompanying target path / flag arguments.
+#          Outputs: Formatted terminal tables, ANSI alert highlights, JSON/Markdown
+#                   reports, in-place redactions, and POSIX exit codes (0/1/2).
+#          Design Rationale: Delivers intuitive developer and CI/CD workflows for
+#                            detecting, redacting, and intercepting leaked credentials.
+# ==============================================================================
 
 from __future__ import annotations
 
