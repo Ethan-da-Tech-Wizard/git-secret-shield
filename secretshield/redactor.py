@@ -1,7 +1,6 @@
 # ==============================================================================
 # Program: redactor.py
 # Programmer: Ethan-da-Tech-Wizard
-# Course: CIS 156 / Advanced Systems
 # Last Modified: November 18, 2026
 # Purpose: Sanitize sensitive environment files and text configurations in-place
 #          or to destination files with automatic backup preservation and masking.

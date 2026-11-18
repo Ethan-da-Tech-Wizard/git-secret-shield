@@ -1,7 +1,6 @@
 # ==============================================================================
 # Program: entropy.py
 # Programmer: Ethan-da-Tech-Wizard
-# Course: CIS 156 / Advanced Systems
 # Last Modified: November 18, 2026
 # Purpose: Calculate Claude Shannon informational entropy on candidate text tokens
 #          to detect unstructured high-randomness secrets and cryptographic keys.

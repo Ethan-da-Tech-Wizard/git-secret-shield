@@ -1,7 +1,6 @@
 # ==============================================================================
 # Program: scanner.py
 # Programmer: Ethan-da-Tech-Wizard
-# Course: CIS 156 / Advanced Systems
 # Last Modified: November 18, 2026
 # Purpose: Core two-phase recursive secret and entropy scanner engine.
 #          Inputs: Files, directory trees, text strings, and git staging areas.

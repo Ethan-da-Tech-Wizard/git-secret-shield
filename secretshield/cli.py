@@ -1,7 +1,6 @@
 # ==============================================================================
 # Program: cli.py
 # Programmer: Ethan-da-Tech-Wizard
-# Course: CIS 156 / Advanced Systems
 # Last Modified: November 18, 2026
 # Purpose: Command-Line Interface Dispatcher for Git Secret Shield.
 #          Inputs: CLI subcommands (scan, install-hook, uninstall-hook, redact, patterns)

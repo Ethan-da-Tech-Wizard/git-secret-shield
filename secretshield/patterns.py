@@ -1,7 +1,6 @@
 # ==============================================================================
 # Program: patterns.py
 # Programmer: Ethan-da-Tech-Wizard
-# Course: CIS 156 / Advanced Systems
 # Last Modified: November 18, 2026
 # Purpose: Define deterministic, non-backtracking regular expression signature
 #          patterns for over 35 cloud vendors, OAuth providers, AI API keys,

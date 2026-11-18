@@ -1,7 +1,6 @@
 # ==============================================================================
 # Program: hook.py
 # Programmer: Ethan-da-Tech-Wizard
-# Course: CIS 156 / Advanced Systems
 # Last Modified: November 18, 2026
 # Purpose: Manage lifecycle (detection, installation, verification, uninstallation)
 #          of POSIX-compliant Git pre-commit hooks to intercept leaked credentials.
