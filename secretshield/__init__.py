@@ -1,9 +1,15 @@
-"""
-Program: Git Secret Shield - Package Initialization & Public API
-Programmer: Ethan Kilmer
-Last Modified: 11/08/2026
-Purpose: Expose clean public API symbols for the Git Secret Shield zero-dependency security toolkit, defining version metadata and convenient imports for scanner, entropy, hook, redactor, and report generation modules.
-"""
+# ==============================================================================
+# Program: __init__.py
+# Programmer: Ethan-da-Tech-Wizard
+# Course: CIS 156 / Advanced Systems
+# Last Modified: November 18, 2026
+# Purpose: Package initialization and public API export for Git Secret Shield.
+#          Inputs: Package-level imports of entropy, hook, patterns, redactor,
+#                  report, and scanner modules.
+#          Outputs: Public API symbols, semantic versioning, and author metadata.
+#          Design Rationale: Delivers a clean zero-dependency programmatic API
+#                            for static credential scanning and pre-commit lifecycle.
+# ==============================================================================
 
 from __future__ import annotations
 
@@ -82,7 +88,7 @@ from secretshield.scanner import (
 __version__ = "1.0.0"
 
 ## Primary author and project maintainer
-__author__ = "Ethan Kilmer"
+__author__ = "Ethan-da-Tech-Wizard"
 
 ## ---------------------------------------------------------------------------
 ## Public API Symbol Export Manifest (__all__)

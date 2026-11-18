@@ -1,9 +1,17 @@
-"""
-Program: Git Secret Shield - Exhaustive Unit & Integration Test Suite
-Programmer: Ethan Kilmer
-Last Modified: 11/08/2026
-Purpose: Comprehensively validate mathematical entropy accuracy, pattern matching precision, false-positive filtering, scanner traversal, git hook workflows, file redaction, and CLI behavior with 100% test pass rate.
-"""
+# ==============================================================================
+# Program: test_secretshield.py
+# Programmer: Ethan-da-Tech-Wizard
+# Course: CIS 156 / Advanced Systems
+# Last Modified: November 18, 2026
+# Purpose: Comprehensive unit and integration test suite for Git Secret Shield.
+#          Inputs: Synthesized cryptographic tokens, mock file hierarchies,
+#                  git staging workspaces, and CLI argument fixtures.
+#          Outputs: Pass/fail assertions validating entropy mathematics, pattern
+#                   detection accuracy, pre-commit hook lifecycles, and redactions.
+#          Design Rationale: Validates that credential scanning contracts and git
+#                            lifecycle hooks execute with zero false-positives and
+#                            fail-safe boundary conditions.
+# ==============================================================================
 
 from __future__ import annotations
 
@@ -350,10 +358,11 @@ class TestGitHookIntegration(unittest.TestCase):
     """Test suite validating git pre-commit hook installer and execution."""
 
     def setUp(self):
-        ## Initialize temporary test git repository
+        ## Initialize clean temporary test git repository with empty template directory
+        ## passing --template= prevents host-level init.templatedir from installing external hooks
         self.repo_dir = tempfile.mkdtemp(prefix="secretshield_git_")
         self.repo_path = Path(self.repo_dir)
-        subprocess.run(["git", "init", "-b", "main"], cwd=self.repo_path, check=True, capture_output=True)
+        subprocess.run(["git", "init", "-b", "main", "--template="], cwd=self.repo_path, check=True, capture_output=True)
         ## Configure dummy test author identity
         subprocess.run(["git", "config", "user.name", "Test User"], cwd=self.repo_path, check=True)
         subprocess.run(["git", "config", "user.email", "test@example.com"], cwd=self.repo_path, check=True)

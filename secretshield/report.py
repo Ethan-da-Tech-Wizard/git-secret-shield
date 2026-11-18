@@ -1,9 +1,15 @@
-"""
-Program: Git Secret Shield - Security Audit Receipt & Report Generator
-Programmer: Ethan Kilmer
-Last Modified: 11/08/2026
-Purpose: Transform detected credential findings into structured, machine-readable JSON receipts for CI/CD pipelines and executive GitHub-flavored Markdown summaries with remediation instructions.
-"""
+# ==============================================================================
+# Program: report.py
+# Programmer: Ethan-da-Tech-Wizard
+# Course: CIS 156 / Advanced Systems
+# Last Modified: November 18, 2026
+# Purpose: Transform detected credential findings into structured JSON receipts
+#          for CI/CD pipelines and executive GitHub-Flavored Markdown audit summaries.
+#          Inputs: ScanFinding lists, target scan path, duration, and metadata.
+#          Outputs: Validated JSON string receipts and human-readable Markdown reports.
+#          Design Rationale: Delivers both machine-parseable artifacts for automated
+#                            gates and clear remediation guidance for human developers.
+# ==============================================================================
 
 from __future__ import annotations
 

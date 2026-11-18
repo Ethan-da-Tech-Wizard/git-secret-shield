@@ -1,9 +1,17 @@
-"""
-Program: Git Secret Shield - Curated Secret Signature Patterns
-Programmer: Ethan Kilmer
-Last Modified: 11/08/2026
-Purpose: Define deterministic, non-backtracking regular expression signature definitions for over 35 cloud vendors, OAuth providers, AI API keys, payment gateways, and private keys with zero external dependencies.
-"""
+# ==============================================================================
+# Program: patterns.py
+# Programmer: Ethan-da-Tech-Wizard
+# Course: CIS 156 / Advanced Systems
+# Last Modified: November 18, 2026
+# Purpose: Define deterministic, non-backtracking regular expression signature
+#          patterns for over 35 cloud vendors, OAuth providers, AI API keys,
+#          payment processors, and private keys.
+#          Inputs: Pattern IDs and search queries.
+#          Outputs: Compiled regex SecretPattern instances, severity ratings,
+#                   and remediation guidance instructions.
+#          Design Rationale: Delivers high-precision, low-false-positive regex
+#                            definitions avoiding ReDoS catastrophic backtracking.
+# ==============================================================================
 
 from __future__ import annotations
 

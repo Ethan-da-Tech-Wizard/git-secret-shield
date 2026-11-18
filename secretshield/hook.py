@@ -1,9 +1,16 @@
-"""
-Program: Git Secret Shield - Git Pre-Commit Hook Integration Guardian
-Programmer: Ethan Kilmer
-Last Modified: 11/08/2026
-Purpose: Manage the lifecycle (detection, installation, verification, and uninstallation) of POSIX-compliant Git pre-commit hooks to prevent uncommitted secrets from leaking into Git version control.
-"""
+# ==============================================================================
+# Program: hook.py
+# Programmer: Ethan-da-Tech-Wizard
+# Course: CIS 156 / Advanced Systems
+# Last Modified: November 18, 2026
+# Purpose: Manage lifecycle (detection, installation, verification, uninstallation)
+#          of POSIX-compliant Git pre-commit hooks to intercept leaked credentials.
+#          Inputs: Target git repository paths and force overwrite boolean flags.
+#          Outputs: Installed/uninstalled .git/hooks/pre-commit scripts with 0755
+#                   permissions and detailed status tuple reports.
+#          Design Rationale: Intercepts staged credential leaks at git commit time
+#                            before tokens are permanently committed or pushed upstream.
+# ==============================================================================
 
 from __future__ import annotations
 

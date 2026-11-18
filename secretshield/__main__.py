@@ -1,9 +1,14 @@
-"""
-Program: Git Secret Shield - Package Executable Main Entry Point
-Programmer: Ethan Kilmer
-Last Modified: 11/08/2026
-Purpose: Enable direct execution of the SecretShield module via 'python3 -m secretshield', dispatching CLI commands and returning POSIX-compliant status codes.
-"""
+# ==============================================================================
+# Program: __main__.py
+# Programmer: Ethan-da-Tech-Wizard
+# Course: CIS 156 / Advanced Systems
+# Last Modified: November 18, 2026
+# Purpose: Direct execution entrypoint for Git Secret Shield.
+#          Inputs: Command line arguments supplied via sys.argv.
+#          Outputs: POSIX-compliant status code propagated upon CLI execution.
+#          Design Rationale: Enables direct invocation via `python3 -m secretshield`
+#                            conforming to standard Python package CLI execution idioms.
+# ==============================================================================
 
 from __future__ import annotations
 
