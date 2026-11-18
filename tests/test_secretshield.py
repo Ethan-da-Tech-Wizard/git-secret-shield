@@ -1,7 +1,6 @@
 # ==============================================================================
 # Program: test_secretshield.py
 # Programmer: Ethan-da-Tech-Wizard
-# Course: CIS 156 / Advanced Systems
 # Last Modified: November 18, 2026
 # Purpose: Comprehensive unit and integration test suite for Git Secret Shield.
 #          Inputs: Synthesized cryptographic tokens, mock file hierarchies,

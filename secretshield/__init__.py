@@ -1,7 +1,6 @@
 # ==============================================================================
 # Program: __init__.py
 # Programmer: Ethan-da-Tech-Wizard
-# Course: CIS 156 / Advanced Systems
 # Last Modified: November 18, 2026
 # Purpose: Package initialization and public API export for Git Secret Shield.
 #          Inputs: Package-level imports of entropy, hook, patterns, redactor,

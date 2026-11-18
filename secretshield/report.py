@@ -1,7 +1,6 @@
 # ==============================================================================
 # Program: report.py
 # Programmer: Ethan-da-Tech-Wizard
-# Course: CIS 156 / Advanced Systems
 # Last Modified: November 18, 2026
 # Purpose: Transform detected credential findings into structured JSON receipts
 #          for CI/CD pipelines and executive GitHub-Flavored Markdown audit summaries.
