@@ -10,6 +10,8 @@
 #                            Shannon information entropy analysis and binary file skipping.
 # ==============================================================================
 
+"""Two-phase scanner: regex signatures first, then entropy analysis, over files, trees, text and staged git diffs."""
+
 from __future__ import annotations
 
 ## ---------------------------------------------------------------------------

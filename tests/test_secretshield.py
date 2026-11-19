@@ -12,6 +12,8 @@
 #                            fail-safe boundary conditions.
 # ==============================================================================
 
+"""Unit and integration tests for entropy, patterns, scanner, hook lifecycle, redactor, reports and CLI."""
+
 from __future__ import annotations
 
 ## ---------------------------------------------------------------------------
@@ -291,11 +293,13 @@ class TestSecretScanner(unittest.TestCase):
     """Test suite validating file and directory scanning logic."""
 
     def setUp(self):
+        """Create an isolated scratch directory for each test."""
         ## Create clean isolated temporary scratch directory
         self.temp_dir = tempfile.mkdtemp(prefix="secretshield_test_")
         self.temp_path = Path(self.temp_dir)
 
     def tearDown(self):
+        """Remove the scratch directory after each test."""
         ## Recursively clean up temporary scratch directory
         shutil.rmtree(self.temp_dir, ignore_errors=True)
 
@@ -357,6 +361,7 @@ class TestGitHookIntegration(unittest.TestCase):
     """Test suite validating git pre-commit hook installer and execution."""
 
     def setUp(self):
+        """Create a throwaway git repository with a fixed test identity."""
         ## Initialize clean temporary test git repository with empty template directory
         ## passing --template= prevents host-level init.templatedir from installing external hooks
         self.repo_dir = tempfile.mkdtemp(prefix="secretshield_git_")
@@ -367,6 +372,7 @@ class TestGitHookIntegration(unittest.TestCase):
         subprocess.run(["git", "config", "user.email", "test@example.com"], cwd=self.repo_path, check=True)
 
     def tearDown(self):
+        """Delete the throwaway git repository."""
         shutil.rmtree(self.repo_dir, ignore_errors=True)
 
     def test_find_git_root(self):
