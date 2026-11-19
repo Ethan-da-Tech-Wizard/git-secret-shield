@@ -11,6 +11,8 @@
 #                            releases by ensuring safe redactions with rollback backups.
 # ==============================================================================
 
+"""Masks detected secrets in files in place or to a new file, optionally keeping a .bak backup."""
+
 from __future__ import annotations
 
 ## ---------------------------------------------------------------------------

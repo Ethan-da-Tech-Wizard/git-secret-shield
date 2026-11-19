@@ -11,6 +11,8 @@
 #                            detecting, redacting, and intercepting leaked credentials.
 # ==============================================================================
 
+"""Command-line dispatcher: scan, install-hook, uninstall-hook, redact and patterns subcommands, with exit codes 0/1/2."""
+
 from __future__ import annotations
 
 ## ---------------------------------------------------------------------------

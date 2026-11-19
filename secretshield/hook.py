@@ -11,6 +11,8 @@
 #                            before tokens are permanently committed or pushed upstream.
 # ==============================================================================
 
+"""Install, verify and remove the Git pre-commit hook that runs the scanner on staged changes."""
+
 from __future__ import annotations
 
 ## ---------------------------------------------------------------------------

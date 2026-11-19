@@ -10,6 +10,8 @@
 #                            for static credential scanning and pre-commit lifecycle.
 # ==============================================================================
 
+"""Git Secret Shield public API: re-exports entropy, hook, pattern, redaction, report and scanner symbols plus version metadata."""
+
 from __future__ import annotations
 
 ## ---------------------------------------------------------------------------

@@ -11,6 +11,8 @@
 #                            random hex, base64, and alphanumeric keys lacking static prefixes.
 # ==============================================================================
 
+"""Shannon-entropy helpers for flagging random-looking tokens that lack a recognizable vendor prefix."""
+
 from __future__ import annotations
 
 ## ---------------------------------------------------------------------------

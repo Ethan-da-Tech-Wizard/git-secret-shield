@@ -12,6 +12,8 @@
 #                            definitions avoiding ReDoS catastrophic backtracking.
 # ==============================================================================
 
+"""Catalog of compiled regex signatures for vendor credentials, with severity and remediation text."""
+
 from __future__ import annotations
 
 ## ---------------------------------------------------------------------------

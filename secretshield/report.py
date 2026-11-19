@@ -10,6 +10,8 @@
 #                            gates and clear remediation guidance for human developers.
 # ==============================================================================
 
+"""Builds JSON and Markdown reports from scanner findings."""
+
 from __future__ import annotations
 
 ## ---------------------------------------------------------------------------

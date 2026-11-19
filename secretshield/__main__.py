@@ -9,6 +9,8 @@
 #                            conforming to standard Python package CLI execution idioms.
 # ==============================================================================
 
+"""Entry point for `python3 -m secretshield`; propagates the CLI exit code."""
+
 from __future__ import annotations
 
 ## ---------------------------------------------------------------------------
