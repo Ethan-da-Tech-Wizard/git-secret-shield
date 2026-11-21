@@ -1,0 +1,24 @@
+name: Bug report
+description: Something fails or behaves differently from what the README says
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Do not report vulnerabilities here (use the Security tab, "Report a vulnerability"). Do not paste real secrets, hostnames, e-mail addresses or personal paths.
+  - type: input
+    id: env
+    attributes:
+      label: Python version and OS
+    validations: {required: true}
+  - type: textarea
+    id: steps
+    attributes:
+      label: Exact command and what you expected
+    validations: {required: true}
+  - type: textarea
+    id: output
+    attributes:
+      label: Raw output
+      render: text
+    validations: {required: true}

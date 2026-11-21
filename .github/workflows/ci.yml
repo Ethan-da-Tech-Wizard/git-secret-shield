@@ -1,0 +1,29 @@
+# Runs the repo's own unit tests (standard library only, no installs beyond Python).
+# A green run means those tests passed on that OS and Python version, nothing more.
+name: ci
+on:
+  push:
+  pull_request:
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: py${{ matrix.python }} on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, macos-latest]
+        python: ["3.9", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Unit tests (scratch HOME and TMPDIR)
+        run: |
+          scratch=$(mktemp -d)
+          mkdir "$scratch/home" "$scratch/tmp"
+          HOME="$scratch/home" TMPDIR="$scratch/tmp" python -m unittest discover -s tests -v 2>&1 | tail -n 15
+          test "${PIPESTATUS[0]}" -eq 0

@@ -12,3 +12,8 @@ build/
 venv/
 *.bak
 *.redacted
+.DS_Store
+.env
+.env.*
+*.log
+audit-receipt.json
