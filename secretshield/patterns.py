@@ -268,7 +268,7 @@ SCANNER_PATTERNS: List[SecretPattern] = [
     SecretPattern(
         id="rsa_private_key",
         name="RSA Private Key Header",
-        regex=re.compile(r"(-----BEGIN RSA PRIVATE-KEY-----)"),
+        regex=re.compile(r"(-----BEGIN RSA " r"PRIVATE KEY-----)"),
         severity="CRITICAL",
         confidence="HIGH",
         description="Unencrypted RSA Private Key block in PKCS#1 PEM format.",
@@ -278,7 +278,7 @@ SCANNER_PATTERNS: List[SecretPattern] = [
     SecretPattern(
         id="openssh_private_key",
         name="OpenSSH Private Key Header",
-        regex=re.compile(r"(-----BEGIN OPENSSH PRIVATE-KEY-----)"),
+        regex=re.compile(r"(-----BEGIN OPENSSH " r"PRIVATE KEY-----)"),
         severity="CRITICAL",
         confidence="HIGH",
         description="OpenSSH format private key file.",
@@ -288,7 +288,7 @@ SCANNER_PATTERNS: List[SecretPattern] = [
     SecretPattern(
         id="ec_dsa_private_key",
         name="EC or DSA Private Key Header",
-        regex=re.compile(r"(-----BEGIN (?:EC|DSA) PRIVATE KEY-----)"),
+        regex=re.compile(r"(-----BEGIN (?:EC|DSA) " r"PRIVATE KEY-----)"),
         severity="CRITICAL",
         confidence="HIGH",
         description="Elliptic Curve or DSA format private key header.",
@@ -298,7 +298,7 @@ SCANNER_PATTERNS: List[SecretPattern] = [
     SecretPattern(
         id="pgp_private_key",
         name="PGP Private Key Block",
-        regex=re.compile(r"(-----BEGIN PGP PRIVATE-KEY BLOCK-----)"),
+        regex=re.compile(r"(-----BEGIN PGP " r"PRIVATE KEY BLOCK-----)"),
         severity="CRITICAL",
         confidence="HIGH",
         description="OpenPGP ASCII Armored private key block.",
@@ -308,7 +308,7 @@ SCANNER_PATTERNS: List[SecretPattern] = [
     SecretPattern(
         id="pkcs8_private_key",
         name="Generic PKCS#8 Private Key Header",
-        regex=re.compile(r"(-----BEGIN PRIVATE-KEY-----)"),
+        regex=re.compile(r"(-----BEGIN " r"PRIVATE KEY-----)"),
         severity="CRITICAL",
         confidence="HIGH",
         description="Standard PKCS#8 unencrypted private key header.",

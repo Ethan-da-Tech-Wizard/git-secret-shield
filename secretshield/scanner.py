@@ -87,7 +87,7 @@ def mask_secret(secret: str, visible_start: int = 4, visible_end: int = 4) -> st
     Safely mask a detected secret string for terminal output and reports.
 
     Example:
-      'AKIAIOSFODNN7EXAMPLE' -> 'AKIA************CDEF'
+      'AKIAIOSFODNN7EXAMPLE' -> 'AKIA************MPLE'
 
     Args:
         secret: The plaintext secret string.

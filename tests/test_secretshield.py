@@ -242,15 +242,15 @@ class TestSignaturePatterns(unittest.TestCase):
         """Match unencrypted RSA, OpenSSH, and generic PKCS#8 private keys."""
         ## RSA PEM header
         rsa = find_pattern_by_id("rsa_private_key")
-        self.assertIsNotNone(rsa.regex.search("-----BEGIN RSA PRIVATE-KEY-----"))
+        self.assertIsNotNone(rsa.regex.search("-----BEGIN " + "RSA PRIVATE KEY-----"))
 
         ## OpenSSH header
         ssh = find_pattern_by_id("openssh_private_key")
-        self.assertIsNotNone(ssh.regex.search("-----BEGIN OPENSSH PRIVATE-KEY-----"))
+        self.assertIsNotNone(ssh.regex.search("-----BEGIN " + "OPENSSH PRIVATE KEY-----"))
 
         ## PKCS#8 generic header
         pkcs8 = find_pattern_by_id("pkcs8_private_key")
-        self.assertIsNotNone(pkcs8.regex.search("-----BEGIN PRIVATE-KEY-----"))
+        self.assertIsNotNone(pkcs8.regex.search("-----BEGIN " + "PRIVATE KEY-----"))
 
     def test_jwt_tokens(self):
         """Match JSON Web Tokens (JWT)."""
