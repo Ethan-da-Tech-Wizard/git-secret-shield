@@ -104,7 +104,8 @@ def cmd_scan(args: argparse.Namespace) -> int:
     elif target_path.is_file():
         if not args.json and not args.markdown:
             print(_colorize(f"[SecretShield] Scanning file: {target_path}...", TermColor.CYAN))
-        findings = scanner.scan_file(target_path)
+        ## root=parent: only folders below the file's own directory count as ignored
+        findings = scanner.scan_file(target_path, target_path.parent)
 
     ## Branch 3: Target is a directory
     elif target_path.is_dir():

@@ -356,6 +356,21 @@ class TestSecretScanner(unittest.TestCase):
         self.assertEqual(len(findings), 1)
         self.assertEqual(findings[0].file_path, str(leaky_file))
 
+    def test_scan_root_under_ignored_folder_name_is_still_scanned(self):
+        """Regression: a scan root that sits below a folder named like an ignored
+        directory (env, build, dist) must not be skipped. Only folders below the
+        scan root count as ignored."""
+        outer = self.temp_path / "env" / "build" / "project"
+        (outer / "node_modules").mkdir(parents=True)
+        key_val = _t("AKIA", "1234567890ABCDEF")
+        (outer / "app.py").write_text(f"AWS_KEY = '{key_val}'\n", encoding="utf-8")
+        (outer / "node_modules" / "dep.js").write_text(f"AWS_KEY = '{key_val}'\n", encoding="utf-8")
+        scanner = SecretScanner(check_entropy=False)
+        findings = scanner.scan_directory(outer)
+        self.assertEqual([Path(f.file_path).name for f in findings], ["app.py"])
+        ## A single explicit file under the same ignored-looking parents is scanned too
+        self.assertEqual(len(scanner.scan_file(outer / "app.py", outer)), 1)
+
 
 class TestGitHookIntegration(unittest.TestCase):
     """Test suite validating git pre-commit hook installer and execution."""

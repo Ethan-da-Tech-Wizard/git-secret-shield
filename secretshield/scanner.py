@@ -218,7 +218,7 @@ class SecretScanner:
             ignored_files if ignored_files is not None else DEFAULT_IGNORED_FILENAMES
         )
 
-    def should_scan_file(self, path: Path) -> bool:
+    def should_scan_file(self, path: Path, root: Optional[Path] = None) -> bool:
         """
         Determine if a file path is eligible for scanning.
 
@@ -231,6 +231,11 @@ class SecretScanner:
 
         Args:
             path: Path to the target file.
+            root: Directory the scan started from. When given, only the folders
+                below it are checked against the ignored-directory set, so a
+                project that happens to live under a folder named "env", "build"
+                or "dist" is still scanned. When omitted, every component of
+                `path` is checked (the older behaviour).
 
         Returns:
             True if file should be scanned, False if skipped.
@@ -248,7 +253,13 @@ class SecretScanner:
             return False
 
         ## Check if any folder component along the path is in the ignored set
-        for part in path.parts:
+        parts = path.parts
+        if root is not None:
+            try:
+                parts = path.relative_to(root).parts
+            except ValueError:
+                pass  # path is not under root: fall back to checking every component
+        for part in parts[:-1] if root is not None else parts:
             if part in self.ignored_dirs:
                 return False
 
@@ -373,18 +384,19 @@ class SecretScanner:
             findings.extend(self.scan_line(line, line_idx, source_name))
         return findings
 
-    def scan_file(self, path: Path) -> List[ScanFinding]:
+    def scan_file(self, path: Path, root: Optional[Path] = None) -> List[ScanFinding]:
         """
         Scan a single file from disk.
 
         Args:
             path: Target file path.
+            root: Optional scan root, see should_scan_file.
 
         Returns:
             List of ScanFinding records.
         """
         ## Verify file meets scanning criteria
-        if not self.should_scan_file(path):
+        if not self.should_scan_file(path, root):
             return []
 
         findings: List[ScanFinding] = []
@@ -430,13 +442,13 @@ class SecretScanner:
                 root_path = Path(root)
                 for file_name in files:
                     file_path = root_path / file_name
-                    if self.should_scan_file(file_path):
-                        all_findings.extend(self.scan_file(file_path))
+                    if self.should_scan_file(file_path, directory):
+                        all_findings.extend(self.scan_file(file_path, directory))
         else:
             ## Non-recursive shallow scan of immediate directory files
             for item in directory.iterdir():
-                if item.is_file() and self.should_scan_file(item):
-                    all_findings.extend(self.scan_file(item))
+                if item.is_file() and self.should_scan_file(item, directory):
+                    all_findings.extend(self.scan_file(item, directory))
 
         return all_findings
 
@@ -507,7 +519,7 @@ class SecretScanner:
                 if current_file:
                     target_file_path = target_dir / current_file
                     ## Verify file is not excluded (e.g. not lockfile or binary)
-                    if self.should_scan_file(target_file_path):
+                    if self.should_scan_file(target_file_path, target_dir):
                         added_text = line[1:]  ## Strip leading '+' diff marker
                         line_findings = self.scan_line(
                             added_text,
