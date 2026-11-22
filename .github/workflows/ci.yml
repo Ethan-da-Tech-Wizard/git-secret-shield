@@ -1,9 +1,12 @@
 # Runs the repo's own unit tests (standard library only, no installs beyond Python).
 # A green run means those tests passed on that OS and Python version, nothing more.
 name: ci
+
 on:
   push:
   pull_request:
+  workflow_dispatch:
+
 permissions:
   contents: read
 
@@ -15,12 +18,14 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-24.04, macos-latest]
-        python: ["3.9", "3.13"]
+        python: ["3.9", "3.10", "3.11", "3.12", "3.13"]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python }}
+      - name: Byte-compile
+        run: python -B -m py_compile secretshield/*.py tests/*.py
       - name: Unit tests (scratch HOME and TMPDIR)
         run: |
           scratch=$(mktemp -d)

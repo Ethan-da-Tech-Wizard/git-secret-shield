@@ -8,6 +8,14 @@ A small, standard-library Python tool that looks for credential-shaped strings i
 
 Leaked keys usually get committed by accident. This project explores how far a dependency-free, offline checker gets: no network calls, no installs, nothing leaves your machine. It is a learning-grade guard rail, not a replacement for a mature scanner or for rotating credentials that were exposed.
 
+## Visual Walkthrough & Execution Previews
+
+### 1. Pre-Commit Staged Credential Gate
+![Pre-Commit Gate](docs/assets/secretshield_precommit_scan.svg)
+
+### 2. Shannon Entropy & High-Value Token Sieve
+![Entropy Detection](docs/assets/secretshield_entropy_detection.svg)
+
 ## Quick start
 
 Requires Python 3.9 or newer (tested on 3.9 and 3.13). Run it from the repository root, no install needed:
@@ -107,6 +115,12 @@ python3 -m unittest discover -s tests
 ```
 
 Observed 2026-11-21 on macOS with a scratch `HOME` and `TMPDIR`, no installs: Python 3.9.6 `Ran 32 tests ... OK`; Python 3.13.17 `Ran 32 tests ... OK`. CI (`.github/workflows/ci.yml`) runs the same on Ubuntu 24.04 and macOS with Python 3.9 and 3.13.
+
+## Engineering Standards & Magi Bible 📖
+
+All code, documentation, and operational protocols follow the open-source **Magi AI Engineering Standard**:
+- **[MAGI_LOOK_HERE.md](MAGI_LOOK_HERE.md):** Contributor & autonomous agent operational rules, code of conduct, and verification criteria.
+- **[MAGI_BIBLE.md](MAGI_BIBLE.md):** The Universal Magi Bible establishing Rule 16 commentary ($\ge 25\%$), visual walkthrough previews, fail-closed boundaries, and standard library reliance.
 
 ## Contributing
 
